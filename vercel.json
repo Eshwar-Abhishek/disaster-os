@@ -1,25 +1,22 @@
 {
   "buildCommand": "npm run build --prefix client",
   "outputDirectory": "client/dist",
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "https://disaster-os.onrender.com/api/$1"
+      "source": "/api/:path*",
+      "destination": "https://disaster-os.onrender.com/api/:path*"
     },
     {
-      "src": "/auth/(.*)",
-      "dest": "https://disaster-os.onrender.com/auth/$1"
+      "source": "/auth/:path*",
+      "destination": "https://disaster-os.onrender.com/auth/:path*"
     },
     {
-      "src": "/socket.io/(.*)",
-      "dest": "https://disaster-os.onrender.com/socket.io/$1"
+      "source": "/socket.io/:path*",
+      "destination": "https://disaster-os.onrender.com/socket.io/:path*"
     },
     {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/((?!api|auth|socket.io).*)",
+      "destination": "/index.html"
     }
   ]
 }
