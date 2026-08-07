@@ -76,12 +76,40 @@ if (fs.existsSync(dbFile)) {
     if (!store.commander_requests) store.commander_requests = [];
     if (!store.security_logs) store.security_logs = [];
     if (!store.audit_logs) store.audit_logs = [];
-    store.incidents = (store.incidents || []).filter(i => 
-      typeof i.latitude === 'number' && !isNaN(i.latitude) &&
-      typeof i.longitude === 'number' && !isNaN(i.longitude) &&
-      typeof i.description === 'string'
-    );
-    saveStore();
+// Ensure seeded system accounts exist and are active
+ensureSeededUsers();
+saveStore();
+
+function ensureSeededUsers() {
+  if (!store.users) store.users = [];
+  const adminPass = bcrypt.hashSync('admin123', 10);
+  const opPass = bcrypt.hashSync('operator123', 10);
+  const citPass = bcrypt.hashSync('citizen123', 10);
+
+  const seeded = [
+    { id: 'admin-seed-id', full_name: 'System Admin', name: 'System Admin', email: 'admin@resq.gov', password_hash: adminPass, role: 'ADMIN', is_active: true, region: 'Central Command', phone: '+1-800-555-RESQ' },
+    { id: 'commander-seed-id', full_name: 'Commander Sarah Vance', name: 'Commander Sarah Vance', email: 'commander@resq.gov', password_hash: opPass, role: 'COMMANDER', is_active: true, region: 'Sector 4 - Urban', phone: '+1-800-555-0199' },
+    { id: 'operator-seed-id', full_name: 'Commander Sarah Vance', name: 'Commander Sarah Vance', email: 'operator@resq.gov', password_hash: opPass, role: 'COMMANDER', is_active: true, region: 'Sector 4 - Urban', phone: '+1-800-555-0199' },
+    { id: 'victim-seed-id', full_name: 'John Citizen', name: 'John Citizen', email: 'victim@resq.gov', password_hash: citPass, role: 'VICTIM', is_active: true, region: 'Downtown District', phone: '+1-800-555-0888' },
+    { id: 'citizen-seed-id', full_name: 'John Citizen', name: 'John Citizen', email: 'citizen@resq.gov', password_hash: citPass, role: 'VICTIM', is_active: true, region: 'Downtown District', phone: '+1-800-555-0888' }
+  ];
+
+  seeded.forEach(account => {
+    const idx = store.users.findIndex(u => u.email === account.email);
+    if (idx === -1) {
+      store.users.push({
+        ...account,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        last_login: new Date().toISOString()
+      });
+    } else {
+      store.users[idx].password_hash = account.password_hash;
+      store.users[idx].is_active = true;
+      store.users[idx].role = account.role;
+    }
+  });
+}
   } catch (err) {
     console.error('Failed to parse database file, re-initializing store:', err.message);
   }

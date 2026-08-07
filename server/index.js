@@ -70,6 +70,8 @@ const extraRoutes = require('./routes/extraRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api', authRoutes);
+app.use('/auth', authRoutes);
+app.use('/', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/incidents', incidentRoutes);
 app.use('/api/ai', aiRoutes);

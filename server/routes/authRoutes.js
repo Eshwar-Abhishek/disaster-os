@@ -202,8 +202,13 @@ router.post(['/login', '/auth/login', '/api/login', '/api/auth/login'], (req, re
   }
 });
 
+// Logout Endpoint
+router.post(['/logout', '/auth/logout', '/api/logout', '/api/auth/logout'], (req, res) => {
+  res.json({ message: 'Logged out successfully.' });
+});
+
 // Profile / Current User Endpoint
-router.get('/profile', authenticateToken, (req, res) => {
+router.get(['/profile', '/auth/profile', '/api/profile', '/api/auth/profile'], authenticateToken, (req, res) => {
   try {
     const user = db.prepare('SELECT id, full_name, name, email, role, region, phone, is_active, created_at, last_login FROM users WHERE id = ?').get(req.user.id || req.user.userId);
     if (!user) {
