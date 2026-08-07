@@ -1,19 +1,16 @@
 function getApiBaseUrl() {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
-  }
   if (typeof window !== 'undefined') {
     if (window.location.hostname === 'localhost' && window.location.port !== '5000') {
       return 'http://localhost:5000/api';
     }
-    if (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('netlify.app')) {
-      return 'https://disaster-os.onrender.com/api';
-    }
   }
-  return '/api';
+  if (import.meta.env.VITE_API_URL && import.meta.env.VITE_API_URL !== '/api') {
+    return import.meta.env.VITE_API_URL;
+  }
+  if (import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_API_BASE_URL !== '/api') {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  return 'https://disaster-os.onrender.com/api';
 }
 
 const API_BASE = getApiBaseUrl();
