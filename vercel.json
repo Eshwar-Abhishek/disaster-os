@@ -7,6 +7,10 @@
       "dest": "https://disaster-os.onrender.com/api/$1"
     },
     {
+      "src": "/auth/(.*)",
+      "dest": "https://disaster-os.onrender.com/auth/$1"
+    },
+    {
       "src": "/socket.io/(.*)",
       "dest": "https://disaster-os.onrender.com/socket.io/$1"
     },
