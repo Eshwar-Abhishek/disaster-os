@@ -120,8 +120,8 @@ router.post('/request-commander', (req, res) => {
   }
 });
 
-// Login Endpoint (Supports ADMIN, COMMANDER, VICTIM)
-router.post('/login', (req, res) => {
+// Login Endpoint (Supports ADMIN, COMMANDER, VICTIM across all path variations)
+router.post(['/login', '/auth/login', '/api/login', '/api/auth/login'], (req, res) => {
   try {
     const { email, password, role } = req.body;
     if (!email || !password) {

@@ -23,6 +23,9 @@ export async function apiRequest(endpoint, options = {}) {
     } else {
       const text = await res.text();
       if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error(`Backend API Endpoint Not Found (HTTP 404 at ${url}). If deploying frontend and backend separately on Render, set the VITE_API_BASE_URL environment variable on your static site to your backend URL (e.g., https://your-backend.onrender.com/api).`);
+        }
         throw new Error(`Server returned HTTP ${res.status}: ${res.statusText}`);
       }
       return { text };
