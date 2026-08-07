@@ -41,9 +41,9 @@ router.post('/commander-requests/:id/approve', (req, res) => {
       const password_hash = bcrypt.hashSync(tempPass, 10);
 
       db.prepare(`
-        INSERT INTO users (id, name, email, password_hash, role, phone, is_active, region)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(userId, reqObj.name, reqObj.email, password_hash, 'COMMANDER', reqObj.phone, 1, reqObj.region || 'Central');
+        INSERT INTO users (id, full_name, name, email, password_hash, role, phone, is_active, region)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(userId, reqObj.name, reqObj.name, reqObj.email, password_hash, 'COMMANDER', reqObj.phone, 1, reqObj.region || 'Central');
     } else {
       // Update role to COMMANDER
       db.prepare('UPDATE users SET role = ? WHERE id = ?').run('COMMANDER', userId);

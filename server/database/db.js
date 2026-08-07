@@ -135,9 +135,9 @@ function saveStore() {
 function seedInitialData() {
   const generateUUID = () => require('crypto').randomUUID();
 
-  const adminPass = bcrypt.hashSync('admin123', 10);
-  const opPass = bcrypt.hashSync('operator123', 10);
-  const citPass = bcrypt.hashSync('citizen123', 10);
+  const adminPass = bcrypt.hashSync('Admin@123', 10);
+  const commanderPass = bcrypt.hashSync('Commander@123', 10);
+  const victimPass = bcrypt.hashSync('Victim@123', 10);
 
   // Users (ADMIN, COMMANDER, VICTIM)
   store.users = [
@@ -157,10 +157,24 @@ function seedInitialData() {
     },
     { 
       id: generateUUID(), 
+      full_name: 'Incident Commander', 
+      name: 'Incident Commander', 
+      email: 'commander@resq.gov', 
+      password_hash: commanderPass, 
+      role: 'COMMANDER', 
+      is_active: true, 
+      region: 'Sector 1 - EOC HQ', 
+      phone: '+1-800-555-0100', 
+      created_at: new Date().toISOString(), 
+      updated_at: new Date().toISOString(), 
+      last_login: new Date().toISOString() 
+    },
+    { 
+      id: generateUUID(), 
       full_name: 'Commander Sarah Vance', 
       name: 'Commander Sarah Vance', 
       email: 'operator@resq.gov', 
-      password_hash: opPass, 
+      password_hash: commanderPass, 
       role: 'COMMANDER', 
       is_active: true, 
       region: 'Sector 4 - Urban', 
@@ -171,10 +185,28 @@ function seedInitialData() {
     },
     { 
       id: generateUUID(), 
+      full_name: 'Victim Citizen', 
+      name: 'Victim Citizen', 
+      email: 'victim@resq.gov', 
+      password_hash: victimPass, 
+      role: 'VICTIM', 
+      is_active: true, 
+      region: 'Metro Zone', 
+      phone: '+1-800-555-0777', 
+      emergency_contact: '+1-800-555-9999', 
+      blood_group: 'A+', 
+      location: 'Sector 2', 
+      medical_conditions: 'None', 
+      created_at: new Date().toISOString(), 
+      updated_at: new Date().toISOString(), 
+      last_login: new Date().toISOString() 
+    },
+    { 
+      id: generateUUID(), 
       full_name: 'John Citizen', 
       name: 'John Citizen', 
       email: 'citizen@resq.gov', 
-      password_hash: citPass, 
+      password_hash: victimPass, 
       role: 'VICTIM', 
       is_active: true, 
       region: 'Downtown District', 

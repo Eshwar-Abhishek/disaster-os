@@ -8,6 +8,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 
+import WelcomePage from './pages/WelcomePage';
+import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import CommanderAccessRequestPage from './pages/CommanderAccessRequestPage';
 
@@ -105,9 +107,9 @@ function MainAppLayout() {
             {/* Default Root Redirect - Commander Dashboard 1st */}
             <Route path="/" element={<Navigate to="/commander/dashboard" replace />} />
 
-            {/* Public / Demo Fallback Routes */}
-            <Route path="/welcome" element={<Navigate to="/commander/dashboard" replace />} />
-            <Route path="/login" element={<Navigate to="/commander/dashboard" replace />} />
+            {/* Public Auth & Portal Selection Routes */}
+            <Route path="/welcome" element={<WelcomePage />} />
+            <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/commander-request" element={<CommanderAccessRequestPage />} />
 
