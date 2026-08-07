@@ -4,12 +4,20 @@
   "description": "Production-grade AI Disaster Response Commander and Offline Victim Survival System",
   "main": "server/index.js",
   "scripts": {
+    "start": "node server/index.js",
     "server": "node server/index.js",
     "client": "npm run dev --prefix client",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "build": "npm run build --prefix client"
+    "build": "npm install --prefix server && npm install --prefix client && npm run build --prefix client"
   },
-  "keywords": ["ai", "disaster-response", "agentic-ai", "commander", "gemini", "offline-survival"],
+  "keywords": [
+    "ai",
+    "disaster-response",
+    "agentic-ai",
+    "commander",
+    "gemini",
+    "offline-survival"
+  ],
   "author": "Antigravity AI",
   "license": "MIT"
 }
