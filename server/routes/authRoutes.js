@@ -18,8 +18,8 @@ const {
 // Signup Endpoint (MongoDB Atlas + RESQ Store)
 const handleSignup = async (req, res) => {
   try {
-    const { email, password, name, full_name, role, region, phone } = req.body;
-    const targetName = name || full_name;
+    const { email, password, name, full_name, fullName, role, region, phone, emergencyContact, bloodGroup, location, medicalConditions } = req.body;
+    const targetName = name || full_name || fullName;
 
     if (!email || !password || !targetName) {
       return res.status(400).json({ error: 'Email, password, and name are required.' });
@@ -50,6 +50,10 @@ const handleSignup = async (req, res) => {
           role: userRole,
           phone: phone || null,
           region: region || 'Central Command',
+          emergency_contact: emergencyContact || null,
+          blood_group: bloodGroup || null,
+          location: location || null,
+          medical_conditions: medicalConditions || null,
           is_active: true
         });
         console.log(`🍃 User document created in MongoDB Atlas for: ${lowerEmail}`);
@@ -62,7 +66,7 @@ const handleSignup = async (req, res) => {
     db.prepare(`
       INSERT INTO users (id, full_name, email, password_hash, role, phone, is_active, emergency_contact, blood_group, location, medical_conditions, region)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, targetName, lowerEmail, password_hash, userRole, phone || null, 1, null, null, null, null, region || 'Central Command');
+    `).run(id, targetName, lowerEmail, password_hash, userRole, phone || null, 1, emergencyContact || null, bloodGroup || null, location || null, medicalConditions || null, region || 'Central Command');
 
     const token = jwt.sign(
       { id, userId: id, email: lowerEmail, full_name: targetName, name: targetName, role: userRole },
@@ -87,6 +91,7 @@ const handleSignup = async (req, res) => {
 
 router.post('/signup', handleSignup);
 router.post('/register', handleSignup);
+router.post('/register/victim', handleSignup);
 
 // Signin / Login Endpoint (MongoDB Atlas + Store Fallback)
 const handleSignin = async (req, res) => {
