@@ -485,7 +485,7 @@ function prepare(sqlQuery) {
         return { cnt: store.commander_requests.length };
       }
 
-      if (q.includes('from users where email =')) return store.users.find(u => u.email.toLowerCase() === (paramVal || '').toLowerCase()) || null;
+      if (q.includes('from users where email =') || q.includes('from users where lower(email) =')) return store.users.find(u => u.email.toLowerCase() === (paramVal || '').toLowerCase()) || null;
       if (q.includes('from users where id =')) return store.users.find(u => u.id === paramVal) || null;
       if (q.includes('from commander_requests where id =')) return store.commander_requests.find(cr => cr.id === paramVal) || null;
       if (q.includes('from incidents where id =')) return store.incidents.find(i => i.id === paramVal) || null;

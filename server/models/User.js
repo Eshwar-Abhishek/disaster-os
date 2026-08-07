@@ -15,7 +15,8 @@ const userSchema = new mongoose.Schema({
   medical_conditions: { type: String },
   last_login: { type: Date }
 }, { 
-  timestamps: true 
+  timestamps: true,
+  bufferCommands: false
 });
 
 module.exports = mongoose.models.User || mongoose.model('User', userSchema);

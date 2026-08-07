@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { randomUUID } = require('crypto');
 const db = require('../database/db');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const { 
   JWT_SECRET, 
@@ -15,7 +16,7 @@ const {
 } = require('../middleware/auth');
 
 // Signup Endpoint (MongoDB Atlas + RESQ Store)
-router.post(['/signup', '/register', '/api/signup', '/api/register', '/api/auth/signup', '/api/auth/register'], async (req, res) => {
+const handleSignup = async (req, res) => {
   try {
     const { email, password, name, full_name, role, region, phone } = req.body;
     const targetName = name || full_name;
@@ -38,28 +39,30 @@ router.post(['/signup', '/register', '/api/signup', '/api/register', '/api/auth/
     const password_hash = bcrypt.hashSync(password, 10);
     const userRole = (role || 'VICTIM').toUpperCase();
 
-    // Save to Mongoose User model (MongoDB Atlas)
-    try {
-      await User.create({
-        name: targetName,
-        full_name: targetName,
-        email: lowerEmail,
-        password_hash,
-        role: userRole,
-        phone: phone || null,
-        region: region || 'Central Command',
-        is_active: true
-      });
-      console.log(`🍃 User document created in MongoDB Atlas for: ${lowerEmail}`);
-    } catch (mErr) {
-      console.warn('MongoDB Atlas User create note:', mErr.message);
+    // Save to Mongoose User model (MongoDB Atlas) if connected
+    if (mongoose.connection.readyState === 1) {
+      try {
+        await User.create({
+          name: targetName,
+          full_name: targetName,
+          email: lowerEmail,
+          password_hash,
+          role: userRole,
+          phone: phone || null,
+          region: region || 'Central Command',
+          is_active: true
+        });
+        console.log(`🍃 User document created in MongoDB Atlas for: ${lowerEmail}`);
+      } catch (mErr) {
+        console.warn('MongoDB Atlas User create note:', mErr.message);
+      }
     }
 
     // Save to DB Store
     db.prepare(`
-      INSERT INTO users (id, full_name, name, email, password_hash, role, region, phone, is_active)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
-    `).run(id, targetName, targetName, lowerEmail, password_hash, userRole, region || 'Central Command', phone || null);
+      INSERT INTO users (id, full_name, email, password_hash, role, phone, is_active, emergency_contact, blood_group, location, medical_conditions, region)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, targetName, lowerEmail, password_hash, userRole, phone || null, 1, null, null, null, null, region || 'Central Command');
 
     const token = jwt.sign(
       { id, userId: id, email: lowerEmail, full_name: targetName, name: targetName, role: userRole },
@@ -80,10 +83,13 @@ router.post(['/signup', '/register', '/api/signup', '/api/register', '/api/auth/
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
+};
+
+router.post('/signup', handleSignup);
+router.post('/register', handleSignup);
 
 // Signin / Login Endpoint (MongoDB Atlas + Store Fallback)
-router.post(['/signin', '/login', '/api/signin', '/api/login', '/api/auth/signin', '/api/auth/login'], async (req, res) => {
+const handleSignin = async (req, res) => {
   try {
     const { email, password, role } = req.body;
     if (!email || !password) {
@@ -189,15 +195,18 @@ router.post(['/signin', '/login', '/api/signin', '/api/login', '/api/auth/signin
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
+};
+
+router.post('/signin', handleSignin);
+router.post('/login', handleSignin);
 
 // Logout Endpoint
-router.post(['/logout', '/auth/logout', '/api/logout', '/api/auth/logout'], (req, res) => {
+router.post('/logout', (req, res) => {
   res.json({ message: 'Logged out successfully.' });
 });
 
 // Profile GET Endpoint
-router.get(['/profile', '/auth/profile', '/api/profile', '/api/auth/profile'], authenticateToken, (req, res) => {
+router.get('/profile', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id || req.user.userId;
     const user = db.prepare('SELECT id, full_name, name, email, role, region, phone, is_active, created_at, last_login FROM users WHERE id = ?').get(userId);
@@ -221,7 +230,7 @@ router.get(['/profile', '/auth/profile', '/api/profile', '/api/auth/profile'], a
 });
 
 // Profile PUT Endpoint
-router.put(['/profile', '/auth/profile', '/api/profile', '/api/auth/profile'], authenticateToken, (req, res) => {
+router.put('/profile', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id || req.user.userId;
     const { full_name, name, phone, region } = req.body;
@@ -240,7 +249,7 @@ router.put(['/profile', '/auth/profile', '/api/profile', '/api/auth/profile'], a
 });
 
 // Change Password Endpoint
-router.put(['/change-password', '/auth/change-password', '/api/auth/change-password'], authenticateToken, (req, res) => {
+router.put('/change-password', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id || req.user.userId;
     const { currentPassword, newPassword } = req.body;
@@ -258,7 +267,7 @@ router.put(['/change-password', '/auth/change-password', '/api/auth/change-passw
 });
 
 // Refresh Token Endpoint
-router.post(['/refresh-token', '/auth/refresh-token', '/api/auth/refresh-token'], authenticateToken, (req, res) => {
+router.post('/refresh-token', authenticateToken, (req, res) => {
   try {
     const user = req.user;
     const newToken = jwt.sign(
