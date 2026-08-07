@@ -56,8 +56,13 @@ function getSocketUrl() {
   if (import.meta.env.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL.replace(/\/api\/?$/, '');
   }
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost' && window.location.port !== '5000') {
-    return 'http://localhost:5000';
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' && window.location.port !== '5000') {
+      return 'http://localhost:5000';
+    }
+    if (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('netlify.app')) {
+      return 'https://disaster-os.onrender.com';
+    }
   }
   return '/';
 }
