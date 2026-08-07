@@ -110,7 +110,9 @@ function MainAppLayout() {
             {/* Public Auth & Portal Selection Routes */}
             <Route path="/welcome" element={<WelcomePage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/signin" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/signup" element={<RegisterPage />} />
             <Route path="/commander-request" element={<CommanderAccessRequestPage />} />
 
             {/* Role Dashboards */}

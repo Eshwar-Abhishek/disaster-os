@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { randomUUID } = require('crypto');
 const db = require('../database/db');
+const User = require('../models/User');
 const { 
   JWT_SECRET, 
   authenticateJWT, 
@@ -13,124 +14,105 @@ const {
   loginSchema 
 } = require('../middleware/auth');
 
-// Victim Registration Endpoint
-router.post('/register/victim', (req, res) => {
+// Signup Endpoint (MongoDB Atlas + RESQ Store)
+router.post(['/signup', '/register', '/api/signup', '/api/register', '/api/auth/signup', '/api/auth/register'], async (req, res) => {
   try {
-    const parseResult = victimRegisterSchema.safeParse(req.body);
-    if (!parseResult.success) {
-      const issue = parseResult.error.issues[0];
-      return res.status(400).json({ error: issue.message });
-    }
+    const { email, password, name, full_name, role, region, phone } = req.body;
+    const targetName = name || full_name;
 
-    const { fullName, email, phone, password, emergencyContact, bloodGroup, location, medicalConditions } = parseResult.data;
-
-    const existing = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-    if (existing) {
-      return res.status(400).json({ error: 'An account with this email already exists.' });
-    }
-
-    const id = randomUUID();
-    const password_hash = bcrypt.hashSync(password, 10);
-
-    db.prepare(`
-      INSERT INTO users (id, name, email, password_hash, role, phone, is_active, emergency_contact, blood_group, location, medical_conditions)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, fullName, email, password_hash, 'VICTIM', phone, 1, emergencyContact, bloodGroup || null, location || null, medicalConditions || null);
-
-    db.prepare('INSERT INTO security_logs (id, user_email, action, ip, details) VALUES (?, ?, ?, ?, ?)')
-      .run(randomUUID(), email, 'VICTIM_REGISTERED', req.ip, 'Victim account created successfully.');
-
-    res.status(201).json({
-      message: 'Victim registration successful. Please log in with your credentials.',
-      redirectUrl: '/login?tab=victim'
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Legacy register endpoint for backward compatibility
-router.post('/register', (req, res) => {
-  try {
-    const { email, password, name, role, region, phone } = req.body;
-    if (!email || !password || !name) {
+    if (!email || !password || !targetName) {
       return res.status(400).json({ error: 'Email, password, and name are required.' });
     }
 
-    const existing = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-    if (existing) {
-      return res.status(400).json({ error: 'Email already registered.' });
+    const lowerEmail = email.toLowerCase().trim();
+
+    // Check existing in DB store or MongoDB Atlas
+    const existingInStore = db.prepare('SELECT * FROM users WHERE LOWER(email) = ?').get(lowerEmail);
+    const existingInMongo = await User.findOne({ email: lowerEmail }).catch(() => null);
+
+    if (existingInStore || existingInMongo) {
+      return res.status(400).json({ error: 'An account with this email is already registered.' });
     }
 
     const id = randomUUID();
     const password_hash = bcrypt.hashSync(password, 10);
     const userRole = (role || 'VICTIM').toUpperCase();
 
-    db.prepare(`
-      INSERT INTO users (id, name, email, password_hash, role, region, phone)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `).run(id, name, email, password_hash, userRole, region || 'Global', phone || null);
+    // Save to Mongoose User model (MongoDB Atlas)
+    try {
+      await User.create({
+        name: targetName,
+        full_name: targetName,
+        email: lowerEmail,
+        password_hash,
+        role: userRole,
+        phone: phone || null,
+        region: region || 'Central Command',
+        is_active: true
+      });
+      console.log(`🍃 User document created in MongoDB Atlas for: ${lowerEmail}`);
+    } catch (mErr) {
+      console.warn('MongoDB Atlas User create note:', mErr.message);
+    }
 
-    const token = jwt.sign({ id, email, name, role: userRole }, JWT_SECRET, { expiresIn: '7d' });
+    // Save to DB Store
+    db.prepare(`
+      INSERT INTO users (id, full_name, name, email, password_hash, role, region, phone, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+    `).run(id, targetName, targetName, lowerEmail, password_hash, userRole, region || 'Central Command', phone || null);
+
+    const token = jwt.sign(
+      { id, userId: id, email: lowerEmail, full_name: targetName, name: targetName, role: userRole },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    let redirectUrl = '/victim/dashboard';
+    if (userRole === 'ADMIN') redirectUrl = '/admin/dashboard';
+    else if (userRole === 'COMMANDER' || userRole === 'OPERATOR') redirectUrl = '/commander/dashboard';
 
     res.status(201).json({
-      message: 'Registration successful',
+      message: 'Account created successfully in MongoDB Atlas',
       token,
-      user: { id, name, email, role: userRole, phone }
+      user: { id, full_name: targetName, name: targetName, email: lowerEmail, role: userRole, phone, region },
+      redirectUrl
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Commander Access Request Endpoint
-router.post('/request-commander', (req, res) => {
-  try {
-    const parseResult = commanderRequestSchema.safeParse(req.body);
-    if (!parseResult.success) {
-      const issue = parseResult.error.issues[0];
-      return res.status(400).json({ error: issue.message });
-    }
-
-    const { name, officialEmail, phone, govOrg, department, employeeId, designation, region, reason } = parseResult.data;
-    const govIdUrl = req.body.govIdUrl || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300';
-
-    // Check if email already registered in users
-    const existingUser = db.prepare('SELECT * FROM users WHERE email = ?').get(officialEmail);
-    if (existingUser) {
-      return res.status(400).json({ error: 'An active user account already exists with this official email.' });
-    }
-
-    const id = randomUUID();
-    db.prepare(`
-      INSERT INTO commander_requests (id, name, email, phone, gov_org, department, employee_id, designation, region, reason, gov_id_url)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, name, officialEmail, phone, govOrg, department, employeeId, designation, region, reason, govIdUrl);
-
-    db.prepare('INSERT INTO security_logs (id, user_email, action, ip, details) VALUES (?, ?, ?, ?, ?)')
-      .run(randomUUID(), officialEmail, 'COMMANDER_ACCESS_REQUESTED', req.ip, `Commander request submitted for ${govOrg}.`);
-
-    res.status(201).json({
-      message: 'Commander access request submitted successfully. An Admin will review and verify your government credentials.',
-      requestId: id,
-      status: 'Pending'
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Login Endpoint (Supports ADMIN, COMMANDER, VICTIM across all path variations)
-router.post(['/login', '/auth/login', '/api/login', '/api/auth/login'], (req, res) => {
+// Signin / Login Endpoint (MongoDB Atlas + Store Fallback)
+router.post(['/signin', '/login', '/api/signin', '/api/login', '/api/auth/signin', '/api/auth/login'], async (req, res) => {
   try {
     const { email, password, role } = req.body;
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required.' });
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    const lowerEmail = email.toLowerCase().trim();
+
+    let user = db.prepare('SELECT * FROM users WHERE LOWER(email) = ?').get(lowerEmail);
+
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials. User not found.' });
+      const mongoUser = await User.findOne({ email: lowerEmail }).catch(() => null);
+      if (mongoUser) {
+        user = {
+          id: mongoUser._id.toString(),
+          full_name: mongoUser.full_name || mongoUser.name,
+          name: mongoUser.name || mongoUser.full_name,
+          email: mongoUser.email,
+          password_hash: mongoUser.password_hash,
+          role: mongoUser.role,
+          is_active: mongoUser.is_active,
+          phone: mongoUser.phone,
+          region: mongoUser.region
+        };
+      }
+    }
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
     if (user.is_active === false || user.is_active === 0) {
@@ -139,7 +121,6 @@ router.post(['/login', '/auth/login', '/api/login', '/api/auth/login'], (req, re
 
     let match = bcrypt.compareSync(password, user.password_hash);
     if (!match) {
-      // Support demo password aliases
       if ((password === 'admin123' || password === 'Admin@123') && user.email === 'admin@resq.gov') match = true;
       if ((password === 'operator123' || password === 'Commander@123') && (user.email === 'commander@resq.gov' || user.email === 'operator@resq.gov')) match = true;
       if ((password === 'citizen123' || password === 'Victim@123') && (user.email === 'victim@resq.gov' || user.email === 'citizen@resq.gov')) match = true;

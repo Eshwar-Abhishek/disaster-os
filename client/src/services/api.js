@@ -62,7 +62,9 @@ export async function apiRequest(endpoint, options = {}) {
 export const api = {
   // Auth
   login: (credentials) => apiRequest('/auth/login', { method: 'POST', body: JSON.stringify(credentials) }),
+  signin: (credentials) => apiRequest('/auth/signin', { method: 'POST', body: JSON.stringify(credentials) }),
   register: (userData) => apiRequest('/auth/register', { method: 'POST', body: JSON.stringify(userData) }),
+  signup: (userData) => apiRequest('/auth/signup', { method: 'POST', body: JSON.stringify(userData) }),
   registerVictim: (payload) => apiRequest('/auth/register/victim', { method: 'POST', body: JSON.stringify(payload) }),
   requestCommanderAccess: (payload) => apiRequest('/auth/request-commander', { method: 'POST', body: JSON.stringify(payload) }),
   getProfile: () => apiRequest('/auth/profile'),
