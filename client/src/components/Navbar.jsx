@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 
 export default function Navbar({ isBatterySaver, setIsBatterySaver, socketConnected }) {
   const navigate = useNavigate();
-  const { user, role, logout, isAuthenticated } = useAuth();
+  const { user, role, logout, isAuthenticated, switchRole } = useAuth();
 
   const handleLogout = () => {
     logout();
@@ -41,19 +41,38 @@ export default function Navbar({ isBatterySaver, setIsBatterySaver, socketConnec
 
       {/* Mode / Role Pill & User Controls */}
       <div className="flex items-center space-x-3">
-        {/* User Role Badge */}
-        {isAuthenticated && (
-          <div className="flex items-center space-x-2 bg-[#55443A] px-3 py-1.5 rounded-xl border border-[#8A9992]/30 text-xs font-mono">
-            {userRole === 'ADMIN' ? (
-              <Lock className="w-3.5 h-3.5 text-[#8A9992]" />
-            ) : userRole === 'COMMANDER' ? (
-              <Radio className="w-3.5 h-3.5 text-[#8A9992]" />
-            ) : (
-              <HeartPulse className="w-3.5 h-3.5 text-[#8A9992]" />
-            )}
-            <span className="font-bold text-[#CFD0CD]">{userRole}</span>
-          </div>
-        )}
+        {/* 1-Click Demo Portal Switcher */}
+        <div className="flex bg-[#55443A] p-1 rounded-xl border border-[#8A9992]/30 text-xs font-mono">
+          <button
+            onClick={() => { switchRole('COMMANDER'); navigate('/commander/dashboard'); }}
+            className={`px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1 ${
+              userRole === 'COMMANDER' || userRole === 'OPERATOR' ? 'bg-[#8A9992] text-[#4D2308] shadow' : 'text-[#CFD0CD] hover:text-white'
+            }`}
+          >
+            <Radio className="w-3 h-3" />
+            <span>Commander</span>
+          </button>
+
+          <button
+            onClick={() => { switchRole('VICTIM'); navigate('/victim/dashboard'); }}
+            className={`px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1 ${
+              userRole === 'VICTIM' || userRole === 'CITIZEN' ? 'bg-[#8A9992] text-[#4D2308] shadow' : 'text-[#CFD0CD] hover:text-white'
+            }`}
+          >
+            <HeartPulse className="w-3 h-3" />
+            <span>Victim</span>
+          </button>
+
+          <button
+            onClick={() => { switchRole('ADMIN'); navigate('/admin/dashboard'); }}
+            className={`px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1 ${
+              userRole === 'ADMIN' ? 'bg-[#8A9992] text-[#4D2308] shadow' : 'text-[#CFD0CD] hover:text-white'
+            }`}
+          >
+            <Lock className="w-3 h-3" />
+            <span>Admin</span>
+          </button>
+        </div>
 
         {/* Battery Saver Mode Toggle */}
         <button
@@ -68,30 +87,6 @@ export default function Navbar({ isBatterySaver, setIsBatterySaver, socketConnec
           <Battery className="w-4 h-4 text-[#8A9992]" />
           <span className="hidden lg:inline">{isBatterySaver ? 'Saver ON' : 'Battery'}</span>
         </button>
-
-        {/* User Info / Logout */}
-        {isAuthenticated ? (
-          <div className="flex items-center space-x-2 pl-2 border-l border-[#8A9992]/20">
-            <div className="w-8 h-8 rounded-full bg-[#55443A] border border-[#8A9992]/40 flex items-center justify-center text-white font-medium text-xs ring-2 ring-[#8A9992]/20">
-              {user?.full_name ? user.full_name.charAt(0) : user?.name ? user.name.charAt(0) : 'U'}
-            </div>
-            <button
-              onClick={handleLogout}
-              title="Logout"
-              className="p-1.5 rounded-lg text-[#CFD0CD] hover:text-white hover:bg-[#55443A] transition-all flex items-center gap-1"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="text-xs hidden sm:inline font-mono">Logout</span>
-            </button>
-          </div>
-        ) : (
-          <Link
-            to="/welcome"
-            className="px-4 py-1.5 text-xs font-medium bg-[#55443A] hover:bg-[#4D2308] text-white border border-[#8A9992]/40 rounded-xl transition-all shadow-sm"
-          >
-            Welcome / Login
-          </Link>
-        )}
       </div>
     </header>
   );

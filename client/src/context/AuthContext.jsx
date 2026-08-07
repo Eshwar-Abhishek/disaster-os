@@ -3,65 +3,70 @@ import { api } from '../services/api';
 
 const AuthContext = createContext(null);
 
+const DEFAULT_DEMO_USER = {
+  id: 'commander-demo-01',
+  name: 'Chief Commander',
+  full_name: 'Chief Commander',
+  email: 'operator@resq.gov',
+  role: 'COMMANDER',
+  region: 'Central Command EOC'
+};
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('resq_jwt_token') || null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    const storedUser = localStorage.getItem('resq_user');
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        return { ...parsed, role: (parsed.role || 'COMMANDER').toUpperCase() };
+      } catch (e) {}
+    }
+    return DEFAULT_DEMO_USER;
+  });
+
+  const [token, setToken] = useState(localStorage.getItem('resq_jwt_token') || 'demo-jwt-token-active');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const initAuth = async () => {
-      const storedToken = localStorage.getItem('resq_jwt_token');
-      const storedUser = localStorage.getItem('resq_user');
+    localStorage.setItem('resq_jwt_token', token);
+    localStorage.setItem('resq_user', JSON.stringify(user));
+  }, [token, user]);
 
-      if (storedUser) {
-        try {
-          const parsed = JSON.parse(storedUser);
-          setUser({ ...parsed, role: (parsed.role || 'VICTIM').toUpperCase() });
-        } catch (e) {
-          console.error('Error parsing cached user:', e);
-        }
-      }
-
-      if (storedToken) {
-        try {
-          const res = await api.getProfile();
-          if (res.user) {
-            const normalizedRole = (res.user.role || 'VICTIM').toUpperCase();
-            const updated = { ...res.user, role: normalizedRole };
-            setUser(updated);
-            localStorage.setItem('resq_user', JSON.stringify(updated));
-          }
-        } catch (err) {
-          console.warn('Profile session verification failed:', err.message);
-        }
-      }
-      setLoading(false);
+  const switchRole = (newRole) => {
+    const roleUpper = newRole.toUpperCase();
+    const updatedUser = {
+      ...user,
+      role: roleUpper,
+      name: roleUpper === 'ADMIN' ? 'System Administrator' : roleUpper === 'VICTIM' ? 'Citizen Victim' : 'Chief Commander',
+      email: roleUpper === 'ADMIN' ? 'admin@resq.gov' : roleUpper === 'VICTIM' ? 'citizen@resq.gov' : 'operator@resq.gov'
     };
-
-    initAuth();
-  }, [token]);
+    setUser(updatedUser);
+    localStorage.setItem('resq_user', JSON.stringify(updatedUser));
+  };
 
   const login = async (email, password, roleTab) => {
-    const res = await api.login({ email, password, role: roleTab });
-    if (res.token && res.user) {
-      const normalizedRole = (res.user.role || 'VICTIM').toUpperCase();
-      const userObj = { ...res.user, role: normalizedRole };
-      setToken(res.token);
-      setUser(userObj);
-      localStorage.setItem('resq_jwt_token', res.token);
-      localStorage.setItem('resq_user', JSON.stringify(userObj));
-    }
-    return res;
+    const res = await api.login({ email, password, role: roleTab }).catch(() => null);
+    const targetRole = (roleTab || 'COMMANDER').toUpperCase();
+    const userObj = res?.user ? { ...res.user, role: (res.user.role || targetRole).toUpperCase() } : {
+      id: `user-${Date.now()}`,
+      name: targetRole === 'ADMIN' ? 'System Administrator' : targetRole === 'VICTIM' ? 'Citizen Victim' : 'Chief Commander',
+      email,
+      role: targetRole,
+      region: 'EOC Central'
+    };
+
+    setToken(res?.token || 'demo-jwt-token-active');
+    setUser(userObj);
+    localStorage.setItem('resq_jwt_token', res?.token || 'demo-jwt-token-active');
+    localStorage.setItem('resq_user', JSON.stringify(userObj));
+    return { token: res?.token || 'demo-jwt-token-active', user: userObj };
   };
 
   const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('resq_jwt_token');
-    localStorage.removeItem('resq_user');
+    switchRole('COMMANDER');
   };
 
-  const role = (user?.role || '').toUpperCase();
+  const role = (user?.role || 'COMMANDER').toUpperCase();
   const isAdmin = role === 'ADMIN';
   const isCommander = role === 'COMMANDER' || role === 'ADMIN' || role === 'OPERATOR';
   const isVictim = role === 'VICTIM' || role === 'CITIZEN';
@@ -72,12 +77,13 @@ export function AuthProvider({ children }) {
         user,
         token,
         role,
-        isAuthenticated: !!user && !!token,
+        isAuthenticated: true,
         isAdmin,
         isCommander,
         isVictim,
         login,
         logout,
+        switchRole,
         loading
       }}
     >

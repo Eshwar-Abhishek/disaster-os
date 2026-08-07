@@ -37,13 +37,11 @@ import ProfilePage from './pages/ProfilePage';
 import NearbyFinderPage from './pages/NearbyFinderPage';
 
 function RootRedirect() {
-  const { isAuthenticated, role, loading } = useAuth();
-  if (loading) return null;
-  if (!isAuthenticated) return <Navigate to="/welcome" replace />;
-  const uRole = (role || '').toUpperCase();
+  const { role } = useAuth();
+  const uRole = (role || 'COMMANDER').toUpperCase();
   if (uRole === 'ADMIN') return <Navigate to="/admin/dashboard" replace />;
-  if (uRole === 'COMMANDER' || uRole === 'OPERATOR') return <Navigate to="/commander/dashboard" replace />;
-  return <Navigate to="/victim/dashboard" replace />;
+  if (uRole === 'VICTIM' || uRole === 'CITIZEN') return <Navigate to="/victim/dashboard" replace />;
+  return <Navigate to="/commander/dashboard" replace />;
 }
 
 function getSocketUrl() {
@@ -106,42 +104,19 @@ function MainAppLayout() {
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           <Routes>
-            {/* Default Root Redirect */}
-            <Route path="/" element={<RootRedirect />} />
+            {/* Default Root Redirect - Commander Dashboard 1st */}
+            <Route path="/" element={<Navigate to="/commander/dashboard" replace />} />
 
-            {/* Public Auth Routes */}
-            <Route path="/welcome" element={<WelcomePage />} />
-            <Route path="/login" element={<LoginPage />} />
+            {/* Public / Demo Fallback Routes */}
+            <Route path="/welcome" element={<Navigate to="/commander/dashboard" replace />} />
+            <Route path="/login" element={<Navigate to="/commander/dashboard" replace />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/commander-request" element={<CommanderAccessRequestPage />} />
 
             {/* Role Dashboards */}
-            <Route
-              path="/admin/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <AdminDashboardPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/commander/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={['COMMANDER', 'ADMIN']}>
-                  <CommanderDashboardPage />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/victim/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={['VICTIM', 'COMMANDER', 'ADMIN']}>
-                  <VictimDashboardPage />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+            <Route path="/commander/dashboard" element={<CommanderDashboardPage />} />
+            <Route path="/victim/dashboard" element={<VictimDashboardPage />} />
 
             {/* Feature Routes Protected by RBAC */}
             <Route
