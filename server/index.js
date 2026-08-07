@@ -97,12 +97,22 @@ app.use((err, req, res, next) => {
 
 // Serve client in production build
 const clientBuildPath = path.join(__dirname, '../client/dist');
-if (fs.existsSync(clientBuildPath)) {
-  app.use(express.static(clientBuildPath));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(clientBuildPath, 'index.html'));
-  });
-}
+app.use(express.static(clientBuildPath));
+
+// Explicit JSON 404 for unmatched API endpoints
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: `API route not found: ${req.originalUrl}` });
+});
+
+// Single Page Application (SPA) Fallback
+app.get('*', (req, res) => {
+  const indexPath = path.join(clientBuildPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send('Client build files not found. Please ensure "npm run build" runs during deployment.');
+  }
+});
 
 // Socket.IO Real-time Connection Handler
 io.on('connection', (socket) => {
