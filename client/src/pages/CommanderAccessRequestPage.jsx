@@ -65,72 +65,64 @@ export default function CommanderAccessRequestPage() {
             </p>
             <div className="pt-2">
               <button
-                onClick={() => navigate('/login?tab=commander')}
+                onClick={() => navigate('/commander/dashboard')}
                 className="px-6 py-2.5 bg-[#8A9992] hover:bg-[#CFD0CD] text-[#4D2308] font-bold text-xs rounded-xl transition"
               >
-                Go to Commander Login →
+                Go to Commander Portal →
               </button>
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div>
-                <label className="block font-mono text-[#8A9992] mb-1">FULL NAME *</label>
+          <form onSubmit={handleSubmit} className="space-y-4 text-xs font-sans">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1 text-left">
+                <label className="text-[11px] font-bold text-[#8A9992] uppercase">Commander Full Name *</label>
                 <input
                   type="text"
                   required
-                  placeholder="Capt. Marcus Brody"
+                  name="name"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={handleChange}
+                  placeholder="Officer Name"
                   className="w-full px-3.5 py-2.5 bg-[#CFD0CD] border border-[#8A9992] rounded-xl text-[#4D2308] font-semibold focus:outline-none focus:ring-2 focus:ring-[#8A9992]"
                 />
               </div>
 
-              <div>
-                <label className="block font-mono text-[#8A9992] mb-1">OFFICIAL GOVT EMAIL *</label>
+              <div className="space-y-1 text-left">
+                <label className="text-[11px] font-bold text-[#8A9992] uppercase">Official Govt Email *</label>
                 <input
                   type="email"
                   required
-                  placeholder="marcus.brody@ndma.gov"
+                  name="officialEmail"
                   value={formData.officialEmail}
-                  onChange={(e) => setFormData({ ...formData, officialEmail: e.target.value })}
+                  onChange={handleChange}
+                  placeholder="officer@ndrf.gov.in"
                   className="w-full px-3.5 py-2.5 bg-[#CFD0CD] border border-[#8A9992] rounded-xl text-[#4D2308] font-semibold focus:outline-none focus:ring-2 focus:ring-[#8A9992]"
                 />
               </div>
 
-              <div>
-                <label className="block font-mono text-[#8A9992] mb-1">PHONE NUMBER *</label>
+              <div className="space-y-1 text-left">
+                <label className="text-[11px] font-bold text-[#8A9992] uppercase">Phone Number *</label>
                 <input
-                  type="text"
+                  type="tel"
                   required
-                  placeholder="+1-800-555-4321"
+                  name="phone"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={handleChange}
+                  placeholder="+91 98765 43210"
                   className="w-full px-3.5 py-2.5 bg-[#CFD0CD] border border-[#8A9992] rounded-xl text-[#4D2308] font-semibold focus:outline-none focus:ring-2 focus:ring-[#8A9992]"
                 />
               </div>
 
-              <div>
-                <label className="block font-mono text-[#8A9992] mb-1">GOVT ORGANIZATION *</label>
+              <div className="space-y-1 text-left">
+                <label className="text-[11px] font-bold text-[#8A9992] uppercase">Government Agency / Org *</label>
                 <input
                   type="text"
                   required
-                  placeholder="National Disaster Management Auth"
+                  name="govOrg"
                   value={formData.govOrg}
-                  onChange={(e) => setFormData({ ...formData, govOrg: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-[#CFD0CD] border border-[#8A9992] rounded-xl text-[#4D2308] font-semibold focus:outline-none focus:ring-2 focus:ring-[#8A9992]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-mono text-[#8A9992] mb-1">DEPARTMENT *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Rapid Rescue Operations"
-                  value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  onChange={handleChange}
+                  placeholder="NDRF / SDMA / Fire & Rescue"
                   className="w-full px-3.5 py-2.5 bg-[#CFD0CD] border border-[#8A9992] rounded-xl text-[#4D2308] font-semibold focus:outline-none focus:ring-2 focus:ring-[#8A9992]"
                 />
               </div>

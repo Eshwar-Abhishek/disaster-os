@@ -8,8 +8,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 
-import WelcomePage from './pages/WelcomePage';
-import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import CommanderAccessRequestPage from './pages/CommanderAccessRequestPage';
 
