@@ -78,6 +78,34 @@ export default function LoginPage() {
     }
   };
 
+  const handlePasswordlessDemoLogin = async (roleType) => {
+    setError('');
+    setLoading(true);
+    let targetEmail = 'operator@resq.gov';
+    let targetPass = 'operator123';
+
+    if (roleType === 'admin') {
+      targetEmail = 'admin@resq.gov';
+      targetPass = 'admin123';
+    } else if (roleType === 'victim') {
+      targetEmail = 'citizen@resq.gov';
+      targetPass = 'citizen123';
+    }
+
+    try {
+      const res = await login(targetEmail, targetPass, roleType.toUpperCase());
+      const userRole = (res.user?.role || roleType).toUpperCase();
+
+      if (userRole === 'ADMIN') navigate('/admin/dashboard');
+      else if (userRole === 'COMMANDER' || userRole === 'OPERATOR') navigate('/commander/dashboard');
+      else navigate('/victim/dashboard');
+    } catch (err) {
+      setError(err.message || 'Passwordless demo login failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleForgotSubmit = (e) => {
     e.preventDefault();
     setForgotSubmitted(true);
@@ -136,57 +164,62 @@ export default function LoginPage() {
           </button>
         </div>
 
+        {/* Error Alert Box */}
         {error && (
-          <div className="p-3 bg-rose-500/20 border border-rose-500/50 rounded-xl text-rose-300 text-xs font-mono text-center">
+          <div className="p-3.5 bg-rose-950/80 border border-rose-600/40 rounded-2xl text-xs text-rose-200 font-mono text-center shadow-lg">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          <div>
-            <label className="block font-mono text-[#8A9992] mb-1">
-              {activeTab === 'admin' ? 'SYSTEM ADMIN EMAIL' : activeTab === 'commander' ? 'OFFICIAL GOVT EMAIL' : 'VICTIM EMAIL'}
+        {/* Login Form */}
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs font-sans">
+          <div className="space-y-1 text-left">
+            <label className="text-[11px] font-bold text-[#8A9992] uppercase tracking-wider">
+              {activeTab === 'commander' ? 'Official Govt Email' : activeTab === 'admin' ? 'System Admin Email' : 'Email Address'}
             </label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-[#4D2308] absolute left-3.5 top-3 z-10" />
+              <Mail className="w-4 h-4 text-[#8A9992] absolute left-3.5 top-3" />
               <input
                 type="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
+                placeholder="user@resq.gov"
                 className="w-full pl-10 pr-4 py-2.5 bg-[#CFD0CD] border border-[#8A9992] rounded-xl text-[#4D2308] font-semibold focus:outline-none focus:ring-2 focus:ring-[#8A9992]"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block font-mono text-[#8A9992] mb-1">PASSWORD</label>
+          <div className="space-y-1 text-left">
+            <label className="text-[11px] font-bold text-[#8A9992] uppercase tracking-wider">Password</label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-[#4D2308] absolute left-3.5 top-3 z-10" />
+              <Lock className="w-4 h-4 text-[#8A9992] absolute left-3.5 top-3" />
               <input
                 type="password"
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
+                placeholder="••••••••"
                 className="w-full pl-10 pr-4 py-2.5 bg-[#CFD0CD] border border-[#8A9992] rounded-xl text-[#4D2308] font-semibold focus:outline-none focus:ring-2 focus:ring-[#8A9992]"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-between font-mono text-[11px] text-[#8A9992]">
-            <label className="flex items-center space-x-2 cursor-pointer">
+          <div className="flex items-center justify-between text-[11px]">
+            <label className="flex items-center space-x-2 text-[#CFD0CD] cursor-pointer">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-[#8A9992] text-[#55443A] focus:ring-[#8A9992]"
+                className="rounded text-[#8A9992] focus:ring-[#8A9992]"
               />
-              <span className="text-[#CFD0CD]">Remember Me</span>
+              <span>Remember Me</span>
             </label>
+
             <button
               type="button"
               onClick={() => setShowForgot(true)}
-              className="text-[#8A9992] hover:text-white underline"
+              className="text-[#8A9992] hover:text-white font-medium underline"
             >
               Forgot Password?
             </button>
@@ -202,33 +235,39 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Demo Credentials Quick Switcher */}
-        <div className="pt-4 border-t border-[#8A9992]/20 text-center text-xs text-[#8A9992] space-y-2">
-          <p className="text-[#CFD0CD] font-semibold">Demo Accounts Ready:</p>
-          <div className="flex justify-center space-x-2 text-[11px] font-mono">
+        {/* ⚡ Passwordless One-Click Instant Demo Login Bar */}
+        <div className="p-3 bg-[#4D2308]/90 rounded-2xl border border-[#8A9992]/30 space-y-2 text-center">
+          <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[#8A9992] uppercase tracking-wider">
+            <span>⚡ Passwordless 1-Click Instant Demo Login</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-xs">
             <button
-              onClick={() => handleTabChange('commander')}
-              className={`hover:text-white underline ${activeTab === 'commander' ? 'text-white font-bold' : 'text-[#8A9992]'}`}
+              type="button"
+              onClick={() => handlePasswordlessDemoLogin('commander')}
+              className="py-2 px-1 bg-[#55443A] hover:bg-[#8A9992] text-[#CFD0CD] hover:text-[#4D2308] font-bold rounded-xl transition shadow border border-[#8A9992]/20"
             >
-              Commander
+              🛡️ Commander
             </button>
-            <span>•</span>
             <button
-              onClick={() => handleTabChange('victim')}
-              className={`hover:text-white underline ${activeTab === 'victim' ? 'text-white font-bold' : 'text-[#8A9992]'}`}
+              type="button"
+              onClick={() => handlePasswordlessDemoLogin('victim')}
+              className="py-2 px-1 bg-[#55443A] hover:bg-[#8A9992] text-[#CFD0CD] hover:text-[#4D2308] font-bold rounded-xl transition shadow border border-[#8A9992]/20"
             >
-              Victim
+              🛟 Victim
             </button>
-            <span>•</span>
             <button
-              onClick={() => handleTabChange('admin')}
-              className={`hover:text-white underline ${activeTab === 'admin' ? 'text-white font-bold' : 'text-[#8A9992]'}`}
+              type="button"
+              onClick={() => handlePasswordlessDemoLogin('admin')}
+              className="py-2 px-1 bg-[#55443A] hover:bg-[#8A9992] text-[#CFD0CD] hover:text-[#4D2308] font-bold rounded-xl transition shadow border border-[#8A9992]/20"
             >
-              Admin
+              🔒 Admin
             </button>
           </div>
-          
-          <div className="pt-2 text-[11px]">
+        </div>
+
+        {/* Demo Credentials Quick Switcher */}
+        <div className="pt-2 text-center text-xs text-[#8A9992] space-y-2">
+          <div className="pt-1 text-[11px]">
             {activeTab === 'victim' ? (
               <span>New Victim? <Link to="/register" className="text-[#8A9992] font-bold underline hover:text-white">Register here</Link></span>
             ) : activeTab === 'commander' ? (
