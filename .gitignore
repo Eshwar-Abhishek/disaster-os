@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment variables & Secret Keys
+.env
+.env.local
+.env.*.local
+*.env
+server/.env
+client/.env
+
+# Build outputs
+dist/
+build/
+**/dist/
+**/build/
+
+# Temporary DB / Local State files
+resq_store.json
+server/database/resq_store.json
+*.json.bak
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+logs/
+
+# Editor & OS temporary files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Diagnostic & Testing
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+.eslintcache

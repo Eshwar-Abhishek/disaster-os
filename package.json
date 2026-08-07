@@ -1,0 +1,15 @@
+{
+  "name": "resq-disaster-response-commander",
+  "version": "1.0.0",
+  "description": "Production-grade AI Disaster Response Commander and Offline Victim Survival System",
+  "main": "server/index.js",
+  "scripts": {
+    "server": "node server/index.js",
+    "client": "npm run dev --prefix client",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "build": "npm run build --prefix client"
+  },
+  "keywords": ["ai", "disaster-response", "agentic-ai", "commander", "gemini", "offline-survival"],
+  "author": "Antigravity AI",
+  "license": "MIT"
+}
