@@ -64,7 +64,13 @@ function MainAppLayout() {
   const [socketConnected, setSocketConnected] = useState(false);
 
   useEffect(() => {
-    const socket = io(getSocketUrl(), { path: '/socket.io', autoConnect: true });
+    const socket = io(getSocketUrl(), { 
+      path: '/socket.io', 
+      autoConnect: true,
+      reconnectionAttempts: 5,
+      timeout: 8000,
+      transports: ['websocket', 'polling']
+    });
 
     socket.on('connect', () => {
       setSocketConnected(true);
