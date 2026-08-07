@@ -1,4 +1,14 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+function getApiBaseUrl() {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost' && window.location.port !== '5000') {
+    return 'http://localhost:5000/api';
+  }
+  return '/api';
+}
+
+const API_BASE = getApiBaseUrl();
 
 function getAuthHeader() {
   const token = localStorage.getItem('resq_jwt_token');

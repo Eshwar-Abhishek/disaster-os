@@ -46,12 +46,25 @@ function RootRedirect() {
   return <Navigate to="/victim/dashboard" replace />;
 }
 
+function getSocketUrl() {
+  if (import.meta.env.VITE_SOCKET_URL) {
+    return import.meta.env.VITE_SOCKET_URL;
+  }
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL.replace(/\/api\/?$/, '');
+  }
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost' && window.location.port !== '5000') {
+    return 'http://localhost:5000';
+  }
+  return '/';
+}
+
 function MainAppLayout() {
   const [isBatterySaver, setIsBatterySaver] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
 
   useEffect(() => {
-    const socket = io('/', { path: '/socket.io', autoConnect: true });
+    const socket = io(getSocketUrl(), { path: '/socket.io', autoConnect: true });
 
     socket.on('connect', () => {
       setSocketConnected(true);
