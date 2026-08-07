@@ -57,7 +57,7 @@ export class EmergencyVoiceAssistant {
   speak(text, langCode = 'en-US', onEnd) {
     if (!text) return;
 
-    // Stop any playing HTML5 Audio element
+    // Stop any playing audio
     if (this.currentAudio) {
       try {
         this.currentAudio.pause();
@@ -65,11 +65,17 @@ export class EmergencyVoiceAssistant {
       } catch (e) {}
     }
 
-    const shortLang = (langCode || 'en').split('-')[0].toLowerCase();
-    const gtxUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${shortLang}&client=gtx`;
+    if (this.synth && (this.synth.speaking || this.synth.pending)) {
+      try {
+        this.synth.cancel();
+      } catch (e) {}
+    }
 
-    // Try HTML5 Audio (GTX endpoint) first for crisp regional accent
-    const audio = new Audio(gtxUrl);
+    const shortLang = (langCode || 'en').split('-')[0].toLowerCase();
+    const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${shortLang}&client=tw-ob`;
+
+    // Try HTML5 Audio with tw-ob endpoint for high-fidelity native voice accents
+    const audio = new Audio(ttsUrl);
     this.currentAudio = audio;
 
     let fallbackTriggered = false;
@@ -92,9 +98,9 @@ export class EmergencyVoiceAssistant {
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise.then(() => {
-        // Audio stream playing successfully
-      }).catch((err) => {
-        // Autoplay policy or CORS error -> Fallback immediately to Web Speech API
+        // High fidelity audio stream playing successfully
+      }).catch(() => {
+        // Autoplay restrictions or browser policy fallback
         triggerFallback();
       });
     }
@@ -102,25 +108,21 @@ export class EmergencyVoiceAssistant {
 
   speakSpeechSynthesisFallback(text, langCode = 'en-US', onEnd) {
     if (!this.synth) {
-      this.playPhoneticSpeechFallback(text, onEnd);
+      if (onEnd) onEnd();
       return;
     }
 
     try {
-      // Resume context if paused by browser
       if (this.synth.paused) {
         this.synth.resume();
       }
 
-      this.synth.cancel();
-
-      // Small delay prevents Chrome speech synthesis queue cancellation drop bug
       setTimeout(() => {
         try {
           const utterance = new SpeechSynthesisUtterance(text);
           const targetLang = langCode || this.currentLanguage || 'en-US';
           utterance.lang = targetLang;
-          utterance.rate = 0.92;
+          utterance.rate = 0.95;
           utterance.pitch = 1.0;
           utterance.volume = 1.0;
 
@@ -132,7 +134,7 @@ export class EmergencyVoiceAssistant {
             const shortLang = targetLang.split('-')[0].toLowerCase();
             const matchingVoice = this.voices.find(v => 
               v.lang.toLowerCase() === targetLang.toLowerCase() || 
-              v.lang.toLowerCase().startsWith(shortLang)
+              v.lang.toLowerCase().replace('_', '-').startsWith(shortLang)
             );
             if (matchingVoice) {
               utterance.voice = matchingVoice;
@@ -146,11 +148,11 @@ export class EmergencyVoiceAssistant {
 
           this.synth.speak(utterance);
         } catch (e) {
-          this.playPhoneticSpeechFallback(text, onEnd);
+          if (onEnd) onEnd();
         }
-      }, 25);
+      }, 50);
     } catch (err) {
-      this.playPhoneticSpeechFallback(text, onEnd);
+      if (onEnd) onEnd();
     }
   }
 
