@@ -104,11 +104,11 @@ function MainAppLayout() {
 
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           <Routes>
-            {/* Apple-Style Passwordless Portal Start Screen */}
-            <Route path="/" element={<WelcomePage />} />
-            <Route path="/welcome" element={<WelcomePage />} />
-            <Route path="/login" element={<WelcomePage />} />
-            <Route path="/signin" element={<WelcomePage />} />
+            {/* Direct Instant Dashboard Landing (Zero Login / Welcome Page) */}
+            <Route path="/" element={<Navigate to="/commander/dashboard" replace />} />
+            <Route path="/welcome" element={<Navigate to="/commander/dashboard" replace />} />
+            <Route path="/login" element={<Navigate to="/commander/dashboard" replace />} />
+            <Route path="/signin" element={<Navigate to="/commander/dashboard" replace />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/signup" element={<RegisterPage />} />
             <Route path="/commander-request" element={<CommanderAccessRequestPage />} />
